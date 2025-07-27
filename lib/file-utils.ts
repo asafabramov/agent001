@@ -58,24 +58,7 @@ export async function uploadFileToStorage(
   onProgress?: (progress: number) => void
 ): Promise<{ success: boolean; error?: string; publicUrl?: string }> {
   try {
-    // Create bucket if it doesn't exist
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some(bucket => bucket.name === 'chat-files');
-    
-    if (!bucketExists) {
-      const { error: bucketError } = await supabase.storage.createBucket('chat-files', {
-        public: true,
-        allowedMimeTypes: ALL_ALLOWED_TYPES,
-        fileSizeLimit: MAX_FILE_SIZE
-      });
-      
-      if (bucketError) {
-        console.error('Error creating bucket:', bucketError);
-        return { success: false, error: 'שגיאה ביצירת אחסון קבצים' };
-      }
-    }
-
-    // Upload file
+    // Try uploading directly first - if bucket doesn't exist, we'll get a specific error
     const { data, error } = await supabase.storage
       .from('chat-files')
       .upload(storagePath, file, {
@@ -84,21 +67,61 @@ export async function uploadFileToStorage(
       });
 
     if (error) {
+      // If bucket doesn't exist, try to create it
+      if (error.message?.includes('Bucket not found') || error.message?.includes('bucket')) {
+        console.log('Bucket not found, attempting to create...');
+        
+        const { error: bucketError } = await supabase.storage.createBucket('chat-files', {
+          public: true,
+          allowedMimeTypes: ALL_ALLOWED_TYPES,
+          fileSizeLimit: MAX_FILE_SIZE
+        });
+        
+        if (bucketError) {
+          console.error('Bucket creation failed:', bucketError);
+          return { 
+            success: false, 
+            error: `יש ליצור bucket ידנית. לך לממשק הניהול של Supabase > Storage > ליצור bucket חדש בשם 'chat-files' עם הגדרות ציבוריות.` 
+          };
+        }
+        
+        // Try upload again after bucket creation
+        const { data: retryData, error: retryError } = await supabase.storage
+          .from('chat-files')
+          .upload(storagePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+          
+        if (retryError) {
+          console.error('Retry upload error:', retryError);
+          return { success: false, error: `שגיאה בהעלאת הקובץ לאחר יצירת bucket: ${retryError.message}` };
+        }
+        
+        // Get public URL after successful retry
+        const { data: { publicUrl } } = supabase.storage
+          .from('chat-files')
+          .getPublicUrl(storagePath);
+
+        onProgress?.(100);
+        return { success: true, publicUrl };
+      }
+      
       console.error('Upload error:', error);
-      return { success: false, error: 'שגיאה בהעלאת הקובץ' };
+      return { success: false, error: `שגיאה בהעלאת הקובץ: ${error.message}` };
     }
 
-    // Get public URL
+    // Get public URL for successful upload
     const { data: { publicUrl } } = supabase.storage
       .from('chat-files')
       .getPublicUrl(storagePath);
 
     onProgress?.(100);
-
     return { success: true, publicUrl };
+    
   } catch (error) {
     console.error('Upload error:', error);
-    return { success: false, error: 'שגיאה בהעלאת הקובץ' };
+    return { success: false, error: 'שגיאה כללית בהעלאת הקובץ' };
   }
 }
 

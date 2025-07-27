@@ -11,7 +11,8 @@
       "Bash(npm run lint)",
       "Bash(git add:*)",
       "Bash(git tag:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npx supabase:*)"
     ],
     "deny": []
   }
