@@ -64,18 +64,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Handle different auth events
+        // Handle different auth events - only for actual state changes, not initial load
         if (event === 'SIGNED_IN') {
-          console.log('User signed in, redirecting to home...');
-          // Use window.location for immediate redirect
+          console.log('User signed in');
+          // Only redirect if we're on the auth page
           if (typeof window !== 'undefined' && window.location.pathname === '/auth') {
-            window.location.href = '/';
+            console.log('Redirecting from auth page to home...');
+            router.replace('/');
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out, redirecting to auth...');
           router.push('/auth');
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed');
+        } else if (event === 'INITIAL_SESSION') {
+          console.log('Initial session loaded, no redirect needed');
         }
       }
     );

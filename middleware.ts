@@ -69,11 +69,13 @@ export async function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
 
+  console.log('Middleware - Path:', pathname, 'Session:', !!session);
+
   // Allow access to auth page and static assets
   if (
     pathname.startsWith('/auth') ||
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api') ||
     pathname.startsWith('/favicon') ||
     pathname === '/manifest.json'
   ) {
@@ -82,15 +84,13 @@ export async function middleware(req: NextRequest) {
 
   // Redirect to auth if no session and trying to access protected routes
   if (!session && pathname !== '/auth') {
+    console.log('No session, redirecting to auth');
     const redirectUrl = new URL('/auth', req.url);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect to home if logged in and trying to access auth page
-  if (session && pathname === '/auth') {
-    const redirectUrl = new URL('/', req.url);
-    return NextResponse.redirect(redirectUrl);
-  }
+  // Don't redirect from auth page in middleware - let the component handle it
+  // This prevents redirect loops
 
   return response;
 }

@@ -63,10 +63,7 @@ export default function AuthPage() {
           toast.error(getErrorMessage(error));
         } else {
           toast.success('התחברת בהצלחה!');
-          // Force immediate redirect
-          setTimeout(() => {
-            router.replace('/');
-          }, 500);
+          // AuthProvider will handle the redirect via onAuthStateChange
         }
       } else if (mode === 'signup') {
         if (formData.password !== formData.confirmPassword) {
