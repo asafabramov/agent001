@@ -6,13 +6,16 @@ import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { ConversationSidebar } from "./ConversationSidebar";
 import { MediaGallery } from "./MediaGallery";
+import { UserMenu } from "@/components/ui/user-menu";
 import { Message, Conversation, FileUpload, ConversationFile } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Files } from "lucide-react";
 import toast from "react-hot-toast";
 
 export function ChatInterface() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
@@ -69,11 +72,13 @@ export function ChatInterface() {
   };
 
   const createNewConversation = async (firstMessage: string): Promise<string> => {
+    if (!user) throw new Error('User not authenticated');
+    
     const { data, error } = await supabase
       .from('conversations')
       .insert({
         title_he: firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : ''),
-        user_id: 'anonymous'
+        user_id: user.id
       })
       .select()
       .single();
@@ -308,7 +313,7 @@ export function ChatInterface() {
       >
         <div className="border-b p-4 bg-background/95 backdrop-blur">
           <div className="flex items-center justify-between">
-            <div className="w-10"></div>
+            <UserMenu />
             <h1 className="text-2xl font-bold hebrew text-center">
               צ&apos;אט בוט עברי
             </h1>

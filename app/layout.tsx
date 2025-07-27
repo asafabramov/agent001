@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Noto_Sans_Hebrew } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { AuthProvider } from "@/components/providers/auth-provider";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ 
@@ -33,17 +34,19 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              style: {
-                fontFamily: 'Noto Sans Hebrew, Inter, system-ui, sans-serif',
-                direction: 'rtl',
-                textAlign: 'right',
-              },
-            }}
-          />
+          <AuthProvider>
+            {children}
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                style: {
+                  fontFamily: 'Noto Sans Hebrew, Inter, system-ui, sans-serif',
+                  direction: 'rtl',
+                  textAlign: 'right',
+                },
+              }}
+            />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

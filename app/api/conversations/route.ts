@@ -1,14 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+export const runtime = 'edge';
+
+// Helper to create authenticated Supabase client
+function createAuthenticatedClient() {
+  const cookieStore = cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
+}
 
 export async function GET() {
   try {
+    const supabase = createAuthenticatedClient();
+    
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { data, error } = await supabase
       .from('conversations')
       .select(`
         *,
         messages (*)
       `)
+      .eq('user_id', user.id)
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -27,9 +66,21 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { title_he, user_id } = await request.json();
+    const supabase = createAuthenticatedClient();
+    
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
-    if (!title_he || !user_id) {
+    const { title_he } = await request.json();
+
+    if (!title_he) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -40,7 +91,7 @@ export async function POST(request: NextRequest) {
       .from('conversations')
       .insert({
         title_he,
-        user_id
+        user_id: user.id  // Use authenticated user ID
       })
       .select()
       .single();

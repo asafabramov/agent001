@@ -1,39 +1,92 @@
-# Claude Code Guidelines
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Context: Hebrew RTL Chatbot
 
 This is a production-ready Hebrew Right-to-Left (RTL) chatbot application built with modern web technologies. The project demonstrates advanced UI/UX patterns for Hebrew language applications with AI integration.
 
-### Project Overview
-- **Primary Language**: Hebrew (עברית) with full RTL support
-- **AI Integration**: Claude Sonnet 4 with streaming responses
-- **Database**: Supabase (PostgreSQL) for conversation persistence
-- **Deployment**: Vercel Edge Functions
-- **UI Framework**: Next.js 14 + shadcn/ui + Framer Motion
+## Development Commands
 
-### Key Features Implemented
-- ✅ Real-time AI streaming with typewriter effects
-- ✅ Complete Hebrew RTL layout and typography
-- ✅ Conversation history with Supabase integration
-- ✅ Markdown rendering with syntax highlighting
-- ✅ Mobile-responsive design with drawer sidebar
-- ✅ Dark/light mode support
-- ✅ Professional animations and transitions
+### Essential Commands
+- `npm run dev` - Start development server on http://localhost:3000
+- `npm run build` - Create production build
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint checks
 
-### Technical Achievements
-- **Performance**: Optimized streaming with debounced scrolling
-- **RTL Layout**: Proper Hebrew text flow (user left, assistant right)
-- **Markdown**: ReactMarkdown with Hebrew RTL prose styles
-- **Accessibility**: Full keyboard navigation and screen reader support
-- **Security**: Environment variables properly configured
-- **Build**: Zero TypeScript errors, passing all lints
+### Testing & Quality
+- Run `npm run lint` after making changes to ensure code quality
+- Build with `npm run build` to verify TypeScript compilation
+- No specific test framework configured - add tests if implementing new features
 
-### Architecture Patterns Used
-- Component memoization for performance
-- Debounced scroll behavior to prevent blinking
-- Lazy markdown parsing (plain text → formatted)
-- Edge runtime for optimal global performance
-- Row Level Security (RLS) for data protection
+## Architecture Overview
+
+### Tech Stack
+- **Frontend**: Next.js 14 App Router with Edge Runtime
+- **UI**: shadcn/ui components + Framer Motion animations
+- **Styling**: Tailwind CSS with RTL configuration
+- **AI**: Claude Sonnet 4 (claude-sonnet-4-20250514) via Anthropic SDK
+- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **Fonts**: Noto Sans Hebrew + Inter for proper Hebrew display
+
+### Key Architecture Patterns
+- **Component memoization** for performance optimization
+- **Debounced scroll behavior** to prevent blinking during streaming
+- **Edge runtime** for optimal global performance (`export const runtime = 'edge'`)
+- **Row Level Security (RLS)** for data protection in Supabase
+- **Streaming responses** with ReadableStream for real-time AI chat
+
+### File Structure Overview
+```
+app/
+├── api/
+│   ├── chat/route.ts           # Claude streaming endpoint (Edge runtime)
+│   ├── conversations/route.ts  # CRUD operations for conversations
+│   ├── files/[conversationId]/route.ts  # File management
+│   ├── process-file/route.ts   # File processing (PDF, DOCX, etc.)
+│   └── upload/route.ts         # File upload handling
+├── globals.css                 # RTL styles + Hebrew fonts
+├── layout.tsx                  # RTL + theme provider setup
+└── page.tsx                    # Main chat interface
+
+components/chat/
+├── ChatInterface.tsx           # Main chat container with state management
+├── ConversationSidebar.tsx     # History sidebar with mobile drawer
+├── MessageBubble.tsx           # Individual message display with RTL
+├── StreamingMessage.tsx        # Real-time typing animation
+├── MessageInput.tsx            # Hebrew RTL input with send functionality
+├── MessageList.tsx             # Animated message container with scroll
+├── MediaGallery.tsx            # File upload and media management
+└── FileUploadButton.tsx        # File upload interface
+
+lib/
+├── anthropic.ts                # Claude client and streaming setup
+├── supabase.ts                 # Database client configuration
+├── file-utils.ts               # File processing utilities
+├── types.ts                    # TypeScript definitions
+└── utils.ts                    # General utilities
+```
+
+### Critical RTL Implementation Details
+- **Layout Direction**: `dir="rtl"` set in root layout
+- **Font Loading**: Dual font setup (Hebrew + Latin) with CSS variables
+- **Chat Bubbles**: User messages on left, assistant on right (RTL flow)
+- **Toast Notifications**: RTL-configured with Hebrew fonts
+- **Component Styling**: All components use RTL-aware Tailwind classes
+
+### Database Schema (Supabase)
+- **conversations**: Chat session storage with Hebrew titles
+- **messages**: Individual chat messages with role-based structure
+- **conversation_files**: File attachments linked to conversations
+- **message_files**: Junction table for message-file relationships
+- **profiles**: User profile management
+
+### API Endpoints Architecture
+- **POST /api/chat**: Streaming chat with Claude using ReadableStream
+- **GET/POST /api/conversations**: Full CRUD for conversation management
+- **POST /api/upload**: File upload with type validation
+- **POST /api/process-file**: Extract text from PDFs, DOCX, Excel files
+- **GET /api/files/[conversationId]**: Retrieve conversation files
 
 ---
 

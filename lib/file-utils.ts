@@ -41,14 +41,14 @@ export function validateFile(file: File): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
-// Generate storage path
-export function generateStoragePath(conversationId: string, fileName: string): string {
+// Generate storage path for authenticated users
+export function generateStoragePath(userId: string, conversationId: string, fileName: string): string {
   const timestamp = Date.now();
   const extension = fileName.split('.').pop();
   const baseName = fileName.replace(/\.[^/.]+$/, '');
   const sanitizedName = baseName.replace(/[^a-zA-Z0-9\u0590-\u05FF_-]/g, '_');
   
-  return `conversations/${conversationId}/${timestamp}_${sanitizedName}.${extension}`;
+  return `users/${userId}/conversations/${conversationId}/${timestamp}_${sanitizedName}.${extension}`;
 }
 
 // Upload file to Supabase Storage
@@ -58,9 +58,9 @@ export async function uploadFileToStorage(
   onProgress?: (progress: number) => void
 ): Promise<{ success: boolean; error?: string; publicUrl?: string }> {
   try {
-    // Try uploading directly first - if bucket doesn't exist, we'll get a specific error
+    // Try uploading to user-files bucket for authenticated users
     const { data, error } = await supabase.storage
-      .from('chat-files')
+      .from('user-files')
       .upload(storagePath, file, {
         cacheControl: '3600',
         upsert: false
@@ -71,8 +71,8 @@ export async function uploadFileToStorage(
       if (error.message?.includes('Bucket not found') || error.message?.includes('bucket')) {
         console.log('Bucket not found, attempting to create...');
         
-        const { error: bucketError } = await supabase.storage.createBucket('chat-files', {
-          public: true,
+        const { error: bucketError } = await supabase.storage.createBucket('user-files', {
+          public: false,  // Private bucket for user files
           allowedMimeTypes: ALL_ALLOWED_TYPES,
           fileSizeLimit: MAX_FILE_SIZE
         });
@@ -81,13 +81,13 @@ export async function uploadFileToStorage(
           console.error('Bucket creation failed:', bucketError);
           return { 
             success: false, 
-            error: `יש ליצור bucket ידנית. לך לממשק הניהול של Supabase > Storage > ליצור bucket חדש בשם 'chat-files' עם הגדרות ציבוריות.` 
+            error: `יש ליצור bucket ידנית. לך לממשק הניהול של Supabase > Storage > ליצור bucket חדש בשם 'user-files' עם הגדרות פרטיות.` 
           };
         }
         
         // Try upload again after bucket creation
         const { data: retryData, error: retryError } = await supabase.storage
-          .from('chat-files')
+          .from('user-files')
           .upload(storagePath, file, {
             cacheControl: '3600',
             upsert: false
@@ -98,26 +98,36 @@ export async function uploadFileToStorage(
           return { success: false, error: `שגיאה בהעלאת הקובץ לאחר יצירת bucket: ${retryError.message}` };
         }
         
-        // Get public URL after successful retry
-        const { data: { publicUrl } } = supabase.storage
-          .from('chat-files')
-          .getPublicUrl(storagePath);
+        // Get signed URL after successful retry (private bucket)
+        const { data, error: urlError } = await supabase.storage
+          .from('user-files')
+          .createSignedUrl(storagePath, 60 * 60 * 24); // 24 hours
+
+        if (urlError) {
+          console.error('URL generation error:', urlError);
+          return { success: false, error: 'שגיאה ביצירת URL לקובץ' };
+        }
 
         onProgress?.(100);
-        return { success: true, publicUrl };
+        return { success: true, publicUrl: data.signedUrl };
       }
       
       console.error('Upload error:', error);
       return { success: false, error: `שגיאה בהעלאת הקובץ: ${error.message}` };
     }
 
-    // Get public URL for successful upload
-    const { data: { publicUrl } } = supabase.storage
-      .from('chat-files')
-      .getPublicUrl(storagePath);
+    // Get signed URL for successful upload (private bucket)
+    const { data, error: urlError } = await supabase.storage
+      .from('user-files')
+      .createSignedUrl(storagePath, 60 * 60 * 24); // 24 hours
+
+    if (urlError) {
+      console.error('URL generation error:', urlError);
+      return { success: false, error: 'שגיאה ביצירת URL לקובץ' };
+    }
 
     onProgress?.(100);
-    return { success: true, publicUrl };
+    return { success: true, publicUrl: data.signedUrl };
     
   } catch (error) {
     console.error('Upload error:', error);
@@ -197,7 +207,7 @@ export async function deleteFile(fileId: string): Promise<{ success: boolean; er
 
     // Delete from storage
     const { error: storageError } = await supabase.storage
-      .from('chat-files')
+      .from('user-files')
       .remove([fileData.storage_path]);
 
     if (storageError) {
