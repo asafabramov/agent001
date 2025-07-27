@@ -12,8 +12,10 @@ export async function middleware(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
+  // If Supabase is not configured, allow access but log warning
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables');
+    console.warn('Supabase environment variables not configured in middleware');
+    return response;
   }
 
   const supabase = createServerClient(
@@ -62,10 +64,22 @@ export async function middleware(req: NextRequest) {
     }
   );
 
-  // Get session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // Get session with error handling
+  let session = null;
+  try {
+    const {
+      data: { session: authSession },
+      error
+    } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.warn('Middleware auth error:', error.message);
+    } else {
+      session = authSession;
+    }
+  } catch (error) {
+    console.warn('Middleware session error:', error);
+  }
 
   const { pathname } = req.nextUrl;
 

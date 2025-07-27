@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { authUtils, AuthContextType } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
@@ -35,6 +35,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
 
   useEffect(() => {
+    // Check if Supabase is configured
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured, skipping auth initialization');
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -42,13 +49,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         if (error) {
           console.error('Error getting session:', error);
+          // Set loading to false even on error to prevent infinite loading
+          setLoading(false);
         } else {
           setSession(session);
           setUser(session?.user ?? null);
+          setLoading(false);
         }
       } catch (error) {
         console.error('Session error:', error);
-      } finally {
+        // Ensure we always set loading to false
         setLoading(false);
       }
     };
