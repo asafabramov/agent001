@@ -118,6 +118,57 @@
   animation: slideInFromLeft 0.3s ease-out;
 }
 
+/* RTL Prose Styles for Markdown */
+.prose {
+  direction: rtl;
+  text-align: right;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Sans Hebrew', 'Inter', system-ui, sans-serif;
+}
+
+.prose p {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Sans Hebrew', 'Inter', system-ui, sans-serif;
+}
+
+.prose ul,
+.prose ol {
+  direction: rtl;
+  text-align: right;
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+.prose li {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Noto Sans Hebrew', 'Inter', system-ui, sans-serif;
+}
+
+.prose strong {
+  font-weight: 600;
+}
+
+.prose code {
+  direction: ltr;
+  text-align: left;
+}
+
+.prose pre {
+  direction: ltr;
+  text-align: left;
+}
+
 /* Scrollbar styling for RTL */
 [dir="rtl"] ::-webkit-scrollbar {
   width: 6px;

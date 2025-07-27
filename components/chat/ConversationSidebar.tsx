@@ -79,18 +79,10 @@ export function ConversationSidebar({
                   onClick={() => onSelectConversation(conversation.id)}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium truncate hebrew text-right">
-                        {conversation.title_he}
-                      </h3>
-                      <p className="text-xs text-muted-foreground hebrew text-right">
-                        {new Date(conversation.updated_at).toLocaleDateString('he-IL')}
-                      </p>
-                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteConversation(conversation.id);
@@ -99,6 +91,14 @@ export function ConversationSidebar({
                       <Trash2 className="h-3 w-3" />
                       <span className="sr-only">מחק שיחה</span>
                     </Button>
+                    <div className="flex-1 min-w-0 text-right">
+                      <h3 className="font-medium hebrew text-right break-words leading-tight">
+                        {conversation.title_he}
+                      </h3>
+                      <p className="text-xs text-muted-foreground hebrew text-right mt-1">
+                        {new Date(conversation.updated_at).toLocaleDateString('he-IL')}
+                      </p>
+                    </div>
                   </div>
                 </Card>
               </motion.div>
@@ -117,19 +117,19 @@ export function ConversationSidebar({
           <Button
             variant="ghost"
             size="icon"
-            className="fixed top-4 right-4 z-40 md:hidden"
+            className="fixed top-4 left-4 z-40 md:hidden"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">פתח תפריט</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-80 p-0">
+        <SheetContent side="left" className="w-80 p-0">
           <SidebarContent />
         </SheetContent>
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-80 md:flex-col md:border-l">
+      <div className="hidden md:flex md:w-80 md:flex-col md:border-l md:border-border">
         <SidebarContent />
       </div>
     </>

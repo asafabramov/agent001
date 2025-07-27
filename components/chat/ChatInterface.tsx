@@ -213,14 +213,22 @@ export function ChatInterface() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background" dir="rtl">
+      <ConversationSidebar
+        conversations={conversations}
+        currentConversationId={currentConversationId || undefined}
+        onSelectConversation={handleSelectConversation}
+        onNewConversation={handleNewConversation}
+        onDeleteConversation={handleDeleteConversation}
+      />
+      
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="flex-1 flex flex-col"
       >
-        <div className="border-b p-4 bg-background/95 backdrop-blur">
+        <div className="border-b border-r p-4 bg-background/95 backdrop-blur">
           <h1 className="text-2xl font-bold hebrew text-center">
             צ&apos;אט בוט עברי
           </h1>
@@ -237,14 +245,6 @@ export function ChatInterface() {
           placeholder={currentConversationId ? "הקלד הודעה..." : "התחל שיחה חדשה..."}
         />
       </motion.div>
-
-      <ConversationSidebar
-        conversations={conversations}
-        currentConversationId={currentConversationId || undefined}
-        onSelectConversation={handleSelectConversation}
-        onNewConversation={handleNewConversation}
-        onDeleteConversation={handleDeleteConversation}
-      />
     </div>
   );
 }

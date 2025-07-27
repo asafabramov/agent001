@@ -1,9 +1,3 @@
 {
-  "permissionMode": "bypassPermissions",
-  "permissions": {
-    "allow": [
-      "Bash(git add:*)"
-    ],
-    "deny": []
-  }
+  "permissionMode": "allowAll"
 }
