@@ -1,13 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { getConversationFiles, deleteFile } from '@/lib/file-utils';
 
 export const runtime = 'edge';
+
+// Helper to create authenticated Supabase client
+function createAuthenticatedClient() {
+  const cookieStore = cookies();
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+
+  return createServerClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
+}
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { conversationId: string } }
 ) {
   try {
+    const supabase = createAuthenticatedClient();
+    
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { conversationId } = params;
     
     if (!conversationId) {
@@ -17,7 +61,21 @@ export async function GET(
       );
     }
 
-    const files = await getConversationFiles(conversationId);
+    // Verify user owns the conversation
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .select('user_id')
+      .eq('id', conversationId)
+      .single();
+
+    if (convError || !conversation || conversation.user_id !== user.id) {
+      return NextResponse.json(
+        { error: 'אין הרשאה לשיחה זו' },
+        { status: 403 }
+      );
+    }
+
+    const files = await getConversationFiles(conversationId, supabase);
     
     return NextResponse.json({
       success: true,
@@ -38,8 +96,21 @@ export async function DELETE(
   { params }: { params: { conversationId: string } }
 ) {
   try {
+    const supabase = createAuthenticatedClient();
+    
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const fileId = searchParams.get('fileId');
+    const { conversationId } = params;
     
     if (!fileId) {
       return NextResponse.json(
@@ -48,7 +119,21 @@ export async function DELETE(
       );
     }
 
-    const result = await deleteFile(fileId);
+    // Verify user owns the conversation
+    const { data: conversation, error: convError } = await supabase
+      .from('conversations')
+      .select('user_id')
+      .eq('id', conversationId)
+      .single();
+
+    if (convError || !conversation || conversation.user_id !== user.id) {
+      return NextResponse.json(
+        { error: 'אין הרשאה לשיחה זו' },
+        { status: 403 }
+      );
+    }
+
+    const result = await deleteFile(fileId, supabase);
     
     if (!result.success) {
       return NextResponse.json(

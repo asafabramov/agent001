@@ -13,10 +13,17 @@ export const runtime = 'edge';
 // Helper to create authenticated Supabase client
 function createAuthenticatedClient() {
   const cookieStore = cookies();
+  
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
 
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {
@@ -85,7 +92,7 @@ export async function POST(request: NextRequest) {
     const storagePath = generateStoragePath(user.id, conversationId, file.name);
 
     // Upload to Supabase Storage
-    const uploadResult = await uploadFileToStorage(file, storagePath);
+    const uploadResult = await uploadFileToStorage(file, storagePath, supabase);
     
     if (!uploadResult.success) {
       return NextResponse.json(
@@ -98,7 +105,8 @@ export async function POST(request: NextRequest) {
     const saveResult = await saveFileMetadata(
       conversationId,
       file,
-      storagePath
+      storagePath,
+      supabase
     );
 
     if (!saveResult.success) {

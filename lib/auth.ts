@@ -105,15 +105,16 @@ export const authUtils = {
   },
 };
 
-// Helper to get authenticated user ID
-export function getAuthenticatedUserId(): string | null {
-  const { data: { user } } = supabase.auth.getUser();
+// Helper to get authenticated user ID (async)
+export async function getAuthenticatedUserId(): Promise<string | null> {
+  const { data: { user } } = await supabase.auth.getUser();
   return user?.id || null;
 }
 
-// Helper to check if user is authenticated
-export function isAuthenticated(): boolean {
-  return getAuthenticatedUserId() !== null;
+// Helper to check if user is authenticated (async)
+export async function isAuthenticated(): Promise<boolean> {
+  const userId = await getAuthenticatedUserId();
+  return userId !== null;
 }
 
 // Types for profile

@@ -1,5 +1,5 @@
-import { supabase } from './supabase';
 import { ConversationFile, FileUpload } from './types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // File type validation
 export const ALLOWED_FILE_TYPES = {
@@ -55,6 +55,7 @@ export function generateStoragePath(userId: string, conversationId: string, file
 export async function uploadFileToStorage(
   file: File,
   storagePath: string,
+  supabase: SupabaseClient,
   onProgress?: (progress: number) => void
 ): Promise<{ success: boolean; error?: string; publicUrl?: string }> {
   try {
@@ -99,7 +100,7 @@ export async function uploadFileToStorage(
         }
         
         // Get signed URL after successful retry (private bucket)
-        const { data, error: urlError } = await supabase.storage
+        const { data: retryUrlData, error: urlError } = await supabase.storage
           .from('user-files')
           .createSignedUrl(storagePath, 60 * 60 * 24); // 24 hours
 
@@ -109,7 +110,7 @@ export async function uploadFileToStorage(
         }
 
         onProgress?.(100);
-        return { success: true, publicUrl: data.signedUrl };
+        return { success: true, publicUrl: retryUrlData.signedUrl };
       }
       
       console.error('Upload error:', error);
@@ -117,7 +118,7 @@ export async function uploadFileToStorage(
     }
 
     // Get signed URL for successful upload (private bucket)
-    const { data, error: urlError } = await supabase.storage
+    const { data: urlData, error: urlError } = await supabase.storage
       .from('user-files')
       .createSignedUrl(storagePath, 60 * 60 * 24); // 24 hours
 
@@ -127,7 +128,7 @@ export async function uploadFileToStorage(
     }
 
     onProgress?.(100);
-    return { success: true, publicUrl: data.signedUrl };
+    return { success: true, publicUrl: urlData.signedUrl };
     
   } catch (error) {
     console.error('Upload error:', error);
@@ -140,6 +141,7 @@ export async function saveFileMetadata(
   conversationId: string,
   file: File,
   storagePath: string,
+  supabase: SupabaseClient,
   extractedText?: string,
   anthropicFileId?: string
 ): Promise<{ success: boolean; fileRecord?: ConversationFile; error?: string }> {
@@ -171,7 +173,7 @@ export async function saveFileMetadata(
 }
 
 // Get files for a conversation
-export async function getConversationFiles(conversationId: string): Promise<ConversationFile[]> {
+export async function getConversationFiles(conversationId: string, supabase: SupabaseClient): Promise<ConversationFile[]> {
   try {
     const { data, error } = await supabase
       .from('conversation_files')
@@ -192,7 +194,7 @@ export async function getConversationFiles(conversationId: string): Promise<Conv
 }
 
 // Delete file
-export async function deleteFile(fileId: string): Promise<{ success: boolean; error?: string }> {
+export async function deleteFile(fileId: string, supabase: SupabaseClient): Promise<{ success: boolean; error?: string }> {
   try {
     // Get file metadata first
     const { data: fileData, error: fetchError } = await supabase
