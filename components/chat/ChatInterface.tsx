@@ -5,8 +5,11 @@ import { motion } from "framer-motion";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { ConversationSidebar } from "./ConversationSidebar";
-import { Message, Conversation } from "@/lib/types";
+import { MediaGallery } from "./MediaGallery";
+import { Message, Conversation, FileUpload, ConversationFile } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
+import { Files } from "lucide-react";
 import toast from "react-hot-toast";
 
 export function ChatInterface() {
@@ -18,6 +21,7 @@ export function ChatInterface() {
     content: string;
     isComplete: boolean;
   } | null>(null);
+  const [showMediaGallery, setShowMediaGallery] = useState(false);
 
   // Load conversations on mount
   useEffect(() => {
@@ -93,7 +97,52 @@ export function ChatInterface() {
     return data;
   };
 
-  const handleSendMessage = async (messageContent: string) => {
+  // Handle file uploads
+  const uploadFiles = async (conversationId: string, files: FileUpload[]): Promise<ConversationFile[]> => {
+    const uploadedFiles: ConversationFile[] = [];
+    
+    for (const fileUpload of files) {
+      try {
+        // Update file status to uploading
+        fileUpload.status = 'uploading';
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', fileUpload.file);
+        formData.append('conversationId', conversationId);
+        
+        // Upload file
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'שגיאה בהעלאת הקובץ');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.file) {
+          fileUpload.status = 'completed';
+          uploadedFiles.push(result.file);
+        } else {
+          throw new Error('שגיאה בהעלאת הקובץ');
+        }
+        
+      } catch (error) {
+        console.error('File upload error:', error);
+        fileUpload.status = 'error';
+        fileUpload.error = error instanceof Error ? error.message : 'שגיאה בהעלאת הקובץ';
+        toast.error(`שגיאה בהעלאת ${fileUpload.file.name}: ${fileUpload.error}`);
+      }
+    }
+    
+    return uploadedFiles;
+  };
+
+  const handleSendMessage = async (messageContent: string, files?: FileUpload[]) => {
     try {
       setIsLoading(true);
       
@@ -101,14 +150,43 @@ export function ChatInterface() {
       
       // Create new conversation if none exists
       if (!conversationId) {
-        conversationId = await createNewConversation(messageContent);
+        const title = messageContent || (files && files.length > 0 ? `שיחה עם ${files.length} קבצים` : 'שיחה חדשה');
+        conversationId = await createNewConversation(title);
         setCurrentConversationId(conversationId);
         await loadConversations();
       }
 
+      // Upload files if any
+      let uploadedFiles: ConversationFile[] = [];
+      if (files && files.length > 0) {
+        uploadedFiles = await uploadFiles(conversationId, files);
+      }
+
+      // Prepare message content with file information
+      let fullMessageContent = messageContent;
+      if (uploadedFiles.length > 0) {
+        const fileDescriptions = uploadedFiles.map(file => 
+          `[קובץ: ${file.file_name}]`
+        ).join('\n');
+        
+        fullMessageContent = messageContent 
+          ? `${messageContent}\n\n${fileDescriptions}`
+          : fileDescriptions;
+      }
+
       // Save user message
-      const userMessage = await saveMessage(conversationId, messageContent, 'user');
+      const userMessage = await saveMessage(conversationId, fullMessageContent, 'user');
       setMessages(prev => [...prev, userMessage]);
+
+      // Link files to message
+      if (uploadedFiles.length > 0) {
+        for (const file of uploadedFiles) {
+          await supabase.from('message_files').insert({
+            message_id: userMessage.id,
+            file_id: file.id
+          });
+        }
+      }
 
       // Start streaming AI response
       setStreamingMessage({ content: '', isComplete: false });
@@ -229,9 +307,23 @@ export function ChatInterface() {
         className="flex-1 flex flex-col max-w-7xl mx-auto w-full"
       >
         <div className="border-b p-4 bg-background/95 backdrop-blur">
-          <h1 className="text-2xl font-bold hebrew text-center">
-            צ&apos;אט בוט עברי
-          </h1>
+          <div className="flex items-center justify-between">
+            <div className="w-10"></div>
+            <h1 className="text-2xl font-bold hebrew text-center">
+              צ&apos;אט בוט עברי
+            </h1>
+            {currentConversationId && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowMediaGallery(true)}
+                className="shrink-0"
+              >
+                <Files className="h-4 w-4" />
+                <span className="sr-only">הצג מדיה וקבצים</span>
+              </Button>
+            )}
+          </div>
         </div>
 
         <MessageList 
@@ -245,6 +337,13 @@ export function ChatInterface() {
           placeholder={currentConversationId ? "הקלד הודעה..." : "התחל שיחה חדשה..."}
         />
       </motion.div>
+
+      {/* Media Gallery */}
+      <MediaGallery
+        conversationId={currentConversationId || undefined}
+        isOpen={showMediaGallery}
+        onClose={() => setShowMediaGallery(false)}
+      />
     </div>
   );
 }

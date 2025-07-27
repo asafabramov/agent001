@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FileUploadButton } from "./FileUploadButton";
+import { FileUpload } from "@/lib/types";
+import toast from "react-hot-toast";
 
 interface MessageInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, files?: FileUpload[]) => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -19,12 +22,22 @@ export function MessageInput({
   placeholder = "הקלד הודעה..." 
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
+  const [attachedFiles, setAttachedFiles] = useState<FileUpload[]>([]);
+
+  const handleFilesSelected = useCallback((files: FileUpload[]) => {
+    setAttachedFiles(files);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && !disabled) {
-      onSendMessage(message.trim());
+    
+    // Can send if there's a message or files
+    const hasContent = message.trim() || attachedFiles.length > 0;
+    
+    if (hasContent && !disabled) {
+      onSendMessage(message.trim(), attachedFiles.length > 0 ? attachedFiles : undefined);
       setMessage("");
+      setAttachedFiles([]);
     }
   };
 
@@ -42,13 +55,21 @@ export function MessageInput({
       transition={{ duration: 0.3 }}
       className="border-t bg-background p-4 lg:px-8"
     >
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-3">
+        {/* File Upload Section */}
+        <FileUploadButton
+          onFilesSelected={handleFilesSelected}
+          disabled={disabled}
+          maxFiles={5}
+        />
+        
+        {/* Message Input */}
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={placeholder}
+            placeholder={attachedFiles.length > 0 ? "הוסף הודעה (אופציונלי)..." : placeholder}
             disabled={disabled}
             className={cn(
               "flex-1 hebrew text-right",
@@ -58,7 +79,7 @@ export function MessageInput({
           />
           <Button 
             type="submit" 
-            disabled={disabled || !message.trim()}
+            disabled={disabled || (!message.trim() && attachedFiles.length === 0)}
             size="icon"
             className="shrink-0"
           >

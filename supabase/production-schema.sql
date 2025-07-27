@@ -52,3 +52,41 @@ $$ language plpgsql;
 create trigger update_conversations_updated_at
   before update on public.conversations
   for each row execute procedure public.update_updated_at_column();
+
+-- Create conversation_files table for file uploads
+create table public.conversation_files (
+  id uuid default uuid_generate_v4() primary key,
+  conversation_id uuid references public.conversations(id) on delete cascade not null,
+  file_name text not null,
+  file_type text not null,
+  file_size bigint not null,
+  storage_path text not null,
+  extracted_text text,
+  anthropic_file_id text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Create message_files table for file-message relationships
+create table public.message_files (
+  id uuid default uuid_generate_v4() primary key,
+  message_id uuid references public.messages(id) on delete cascade not null,
+  file_id uuid references public.conversation_files(id) on delete cascade not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- Create indexes for file tables
+create index idx_conversation_files_conversation_id on public.conversation_files(conversation_id);
+create index idx_conversation_files_created_at on public.conversation_files(created_at desc);
+create index idx_message_files_message_id on public.message_files(message_id);
+create index idx_message_files_file_id on public.message_files(file_id);
+
+-- Enable RLS on file tables
+alter table public.conversation_files enable row level security;
+alter table public.message_files enable row level security;
+
+-- Allow all operations for file tables (demo mode)
+create policy "Allow all for conversation_files" on public.conversation_files
+  for all using (true);
+
+create policy "Allow all for message_files" on public.message_files
+  for all using (true);
