@@ -1,8 +1,15 @@
 {
-  "permissionMode": "allowAll",
   "permissions": {
     "allow": [
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run lint)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

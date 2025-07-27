@@ -34,7 +34,7 @@ export function ConversationSidebar({
 }: ConversationSidebarProps) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between p-4 border-b border-r">
         <h2 className="text-lg font-semibold hebrew">השיחות שלי</h2>
         <div className="flex gap-2">
           <ThemeToggle />

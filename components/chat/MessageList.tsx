@@ -45,7 +45,7 @@ export function MessageList({ messages, streamingMessage }: MessageListProps) {
     } else if (streamingMessage && !streamingMessage.isComplete) {
       debouncedScroll();
     }
-  }, [streamingMessage?.isComplete, streamingMessage?.content, scrollToBottom, debouncedScroll]);
+  }, [streamingMessage?.isComplete, streamingMessage?.content, streamingMessage, scrollToBottom, debouncedScroll]);
 
   if (messages.length === 0 && !streamingMessage) {
     return (
@@ -66,8 +66,8 @@ export function MessageList({ messages, streamingMessage }: MessageListProps) {
   }
 
   return (
-    <ScrollArea className="flex-1 px-4" ref={scrollAreaRef}>
-      <div className="py-4">
+    <ScrollArea className="flex-1 px-4 lg:px-8" ref={scrollAreaRef}>
+      <div className="py-4 max-w-4xl mx-auto">
         <AnimatePresence mode="popLayout">
           {messages.map((message, index) => (
             <MessageBubble

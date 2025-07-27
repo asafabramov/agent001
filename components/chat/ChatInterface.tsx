@@ -69,7 +69,7 @@ export function ChatInterface() {
       .from('conversations')
       .insert({
         title_he: firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : ''),
-        user_id: 'temp-user' // TODO: Replace with actual auth user
+        user_id: 'anonymous'
       })
       .select()
       .single();
@@ -226,9 +226,9 @@ export function ChatInterface() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="flex-1 flex flex-col"
+        className="flex-1 flex flex-col max-w-7xl mx-auto w-full"
       >
-        <div className="border-b border-r p-4 bg-background/95 backdrop-blur">
+        <div className="border-b p-4 bg-background/95 backdrop-blur">
           <h1 className="text-2xl font-bold hebrew text-center">
             צ&apos;אט בוט עברי
           </h1>

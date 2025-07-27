@@ -40,35 +40,37 @@ export function MessageInput({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="border-t bg-background p-4"
+      className="border-t bg-background p-4 lg:px-8"
     >
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <Input
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder={placeholder}
-          disabled={disabled}
-          className={cn(
-            "flex-1 hebrew text-right",
-            "placeholder:text-right placeholder:text-muted-foreground"
-          )}
-          dir="rtl"
-        />
-        <Button 
-          type="submit" 
-          disabled={disabled || !message.trim()}
-          size="icon"
-          className="shrink-0"
-        >
-          {disabled ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-          <span className="sr-only">שלח הודעה</span>
-        </Button>
-      </form>
+      <div className="max-w-4xl mx-auto">
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <Input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder={placeholder}
+            disabled={disabled}
+            className={cn(
+              "flex-1 hebrew text-right",
+              "placeholder:text-right placeholder:text-muted-foreground"
+            )}
+            dir="rtl"
+          />
+          <Button 
+            type="submit" 
+            disabled={disabled || !message.trim()}
+            size="icon"
+            className="shrink-0"
+          >
+            {disabled ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            <span className="sr-only">שלח הודעה</span>
+          </Button>
+        </form>
+      </div>
     </motion.div>
   );
 }

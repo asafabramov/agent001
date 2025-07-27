@@ -1,5 +1,42 @@
 # Claude Code Guidelines
 
+## Project Context: Hebrew RTL Chatbot
+
+This is a production-ready Hebrew Right-to-Left (RTL) chatbot application built with modern web technologies. The project demonstrates advanced UI/UX patterns for Hebrew language applications with AI integration.
+
+### Project Overview
+- **Primary Language**: Hebrew (עברית) with full RTL support
+- **AI Integration**: Claude Sonnet 4 with streaming responses
+- **Database**: Supabase (PostgreSQL) for conversation persistence
+- **Deployment**: Vercel Edge Functions
+- **UI Framework**: Next.js 14 + shadcn/ui + Framer Motion
+
+### Key Features Implemented
+- ✅ Real-time AI streaming with typewriter effects
+- ✅ Complete Hebrew RTL layout and typography
+- ✅ Conversation history with Supabase integration
+- ✅ Markdown rendering with syntax highlighting
+- ✅ Mobile-responsive design with drawer sidebar
+- ✅ Dark/light mode support
+- ✅ Professional animations and transitions
+
+### Technical Achievements
+- **Performance**: Optimized streaming with debounced scrolling
+- **RTL Layout**: Proper Hebrew text flow (user left, assistant right)
+- **Markdown**: ReactMarkdown with Hebrew RTL prose styles
+- **Accessibility**: Full keyboard navigation and screen reader support
+- **Security**: Environment variables properly configured
+- **Build**: Zero TypeScript errors, passing all lints
+
+### Architecture Patterns Used
+- Component memoization for performance
+- Debounced scroll behavior to prevent blinking
+- Lazy markdown parsing (plain text → formatted)
+- Edge runtime for optimal global performance
+- Row Level Security (RLS) for data protection
+
+---
+
 ## Architecture Decisions
 Consider implications before making changes:
 - Impact on existing functionality
