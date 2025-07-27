@@ -66,8 +66,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Handle different auth events
         if (event === 'SIGNED_IN') {
-          router.push('/');
+          console.log('User signed in, redirecting to home...');
+          // Use window.location for immediate redirect
+          if (typeof window !== 'undefined' && window.location.pathname === '/auth') {
+            window.location.href = '/';
+          }
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out, redirecting to auth...');
           router.push('/auth');
         } else if (event === 'TOKEN_REFRESHED') {
           console.log('Token refreshed');

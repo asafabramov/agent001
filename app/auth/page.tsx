@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,13 @@ import { Card } from "@/components/ui/card";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { authUtils, getErrorMessage } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/auth-provider";
 import toast from "react-hot-toast";
 
 type AuthMode = 'login' | 'signup' | 'reset';
 
 export default function AuthPage() {
+  const { user, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +27,31 @@ export default function AuthPage() {
 
   const router = useRouter();
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      console.log('User already logged in, redirecting...');
+      router.replace('/');
+    }
+  }, [user, authLoading, router]);
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">טוען...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if user is logged in (prevent flash)
+  if (user) {
+    return null;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -36,7 +63,10 @@ export default function AuthPage() {
           toast.error(getErrorMessage(error));
         } else {
           toast.success('התחברת בהצלחה!');
-          router.push('/');
+          // Force immediate redirect
+          setTimeout(() => {
+            router.replace('/');
+          }, 500);
         }
       } else if (mode === 'signup') {
         if (formData.password !== formData.confirmPassword) {
