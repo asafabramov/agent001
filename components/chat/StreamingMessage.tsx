@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,13 +15,14 @@ interface StreamingMessageProps {
   isComplete: boolean;
 }
 
-export function StreamingMessage({ content, isComplete }: StreamingMessageProps) {
+export const StreamingMessage = memo(function StreamingMessage({ content, isComplete }: StreamingMessageProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className="flex gap-3 mb-4 flex-row-reverse"
+      key="streaming-message"
     >
       <Avatar className="h-8 w-8 shrink-0">
         <AvatarFallback className="bg-muted text-muted-foreground">
@@ -30,50 +31,55 @@ export function StreamingMessage({ content, isComplete }: StreamingMessageProps)
       </Avatar>
 
       <Card className="p-4 max-w-[80%] break-words bg-muted text-muted-foreground mr-auto ml-12">
-        <div className="text-sm leading-relaxed hebrew text-right prose prose-sm max-w-none" dir="rtl">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              h1: ({ children }) => <h1 className="text-lg font-bold mb-2 text-right hebrew">{children}</h1>,
-              h2: ({ children }) => <h2 className="text-base font-semibold mb-2 text-right hebrew">{children}</h2>,
-              h3: ({ children }) => <h3 className="text-sm font-medium mb-1 text-right hebrew">{children}</h3>,
-              p: ({ children }) => <p className="mb-2 text-right hebrew leading-relaxed">{children}</p>,
-              ul: ({ children }) => <ul className="list-disc list-inside mb-2 text-right hebrew space-y-1">{children}</ul>,
-              ol: ({ children }) => <ol className="list-decimal list-inside mb-2 text-right hebrew space-y-1">{children}</ol>,
-              li: ({ children }) => <li className="text-right hebrew">{children}</li>,
-              strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-              em: ({ children }) => <em className="italic">{children}</em>,
-              code: ({ children, className, ...props }: any) => {
-                const match = /language-(\w+)/.exec(className || '');
-                const isInline = !match;
-                
-                return isInline ? (
-                  <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono" {...props}>
-                    {children}
-                  </code>
-                ) : (
-                  <SyntaxHighlighter
-                    style={tomorrow}
-                    language={match[1]}
-                    PreTag="div"
-                    className="rounded-md text-sm my-2"
-                    {...props}
-                  >
-                    {String(children).replace(/\n$/, '')}
-                  </SyntaxHighlighter>
-                );
-              },
-            }}
-          >
-            {content}
-          </ReactMarkdown>
-          
-          {!isComplete && (
-            <motion.span
-              animate={{ opacity: [1, 0] }}
-              transition={{ duration: 0.8, repeat: Infinity, repeatType: "reverse" }}
-              className="inline-block w-2 h-4 bg-current mr-1"
-            />
+        <div className="text-sm leading-relaxed hebrew text-right" dir="rtl">
+          {isComplete ? (
+            <div className="prose prose-sm max-w-none">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  h1: ({ children }) => <h1 className="text-lg font-bold mb-2 text-right hebrew">{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-base font-semibold mb-2 text-right hebrew">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-sm font-medium mb-1 text-right hebrew">{children}</h3>,
+                  p: ({ children }) => <p className="mb-2 text-right hebrew leading-relaxed">{children}</p>,
+                  ul: ({ children }) => <ul className="list-disc list-inside mb-2 text-right hebrew space-y-1">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal list-inside mb-2 text-right hebrew space-y-1">{children}</ol>,
+                  li: ({ children }) => <li className="text-right hebrew">{children}</li>,
+                  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                  em: ({ children }) => <em className="italic">{children}</em>,
+                  code: ({ children, className, ...props }: any) => {
+                    const match = /language-(\w+)/.exec(className || '');
+                    const isInline = !match;
+                    
+                    return isInline ? (
+                      <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono" {...props}>
+                        {children}
+                      </code>
+                    ) : (
+                      <SyntaxHighlighter
+                        style={tomorrow}
+                        language={match[1]}
+                        PreTag="div"
+                        className="rounded-md text-sm my-2"
+                        {...props}
+                      >
+                        {String(children).replace(/\n$/, '')}
+                      </SyntaxHighlighter>
+                    );
+                  },
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <div className="text-right hebrew leading-relaxed whitespace-pre-wrap">
+              {content}
+              <motion.span
+                animate={{ opacity: [1, 0] }}
+                transition={{ duration: 0.8, repeat: Infinity, repeatType: "reverse" }}
+                className="inline-block w-2 h-4 bg-current mr-1"
+              />
+            </div>
           )}
         </div>
         
@@ -88,4 +94,4 @@ export function StreamingMessage({ content, isComplete }: StreamingMessageProps)
       </Card>
     </motion.div>
   );
-}
+});

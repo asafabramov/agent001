@@ -1,3 +1,9 @@
 {
-  "permissionMode": "allowAll"
+  "permissionMode": "allowAll",
+  "permissions": {
+    "allow": [
+      "Bash(git reset:*)"
+    ],
+    "deny": []
+  }
 }

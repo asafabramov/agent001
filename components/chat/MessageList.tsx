@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./MessageBubble";
@@ -18,16 +18,34 @@ interface MessageListProps {
 export function MessageList({ messages, streamingMessage }: MessageListProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (bottomRef.current) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, []);
 
+  const debouncedScroll = useCallback(() => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(scrollToBottom, 100);
+  }, [scrollToBottom]);
+
+  // Only scroll when messages change or streaming starts/completes
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamingMessage]);
+  }, [messages.length, scrollToBottom]);
+
+  // Debounced scroll for streaming updates
+  useEffect(() => {
+    if (streamingMessage?.isComplete) {
+      scrollToBottom();
+    } else if (streamingMessage && !streamingMessage.isComplete) {
+      debouncedScroll();
+    }
+  }, [streamingMessage?.isComplete, streamingMessage?.content, scrollToBottom, debouncedScroll]);
 
   if (messages.length === 0 && !streamingMessage) {
     return (

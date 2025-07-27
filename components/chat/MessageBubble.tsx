@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -17,7 +17,7 @@ interface MessageBubbleProps {
   isLatest?: boolean;
 }
 
-export function MessageBubble({ message, isLatest = false }: MessageBubbleProps) {
+export const MessageBubble = memo(function MessageBubble({ message, isLatest = false }: MessageBubbleProps) {
   const isUser = message.role === 'user';
   const isAssistant = message.role === 'assistant';
 
@@ -26,7 +26,10 @@ export function MessageBubble({ message, isLatest = false }: MessageBubbleProps)
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex gap-3 mb-4 flex-row-reverse"
+      className={cn(
+        "flex gap-3 mb-4",
+        isUser ? "flex-row" : "flex-row-reverse"
+      )}
     >
       <Avatar className="h-8 w-8 shrink-0">
         <AvatarFallback className={cn(
@@ -39,7 +42,7 @@ export function MessageBubble({ message, isLatest = false }: MessageBubbleProps)
       <Card className={cn(
         "p-4 max-w-[80%] break-words",
         isUser 
-          ? "bg-primary text-primary-foreground mr-auto ml-12" 
+          ? "bg-primary text-primary-foreground ml-auto mr-12" 
           : "bg-muted text-muted-foreground mr-auto ml-12"
       )}>
         <div className="text-sm leading-relaxed hebrew text-right">
@@ -98,4 +101,4 @@ export function MessageBubble({ message, isLatest = false }: MessageBubbleProps)
       </Card>
     </motion.div>
   );
-}
+});
