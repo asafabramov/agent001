@@ -27,13 +27,13 @@ export default function AuthPage() {
 
   const router = useRouter();
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (!authLoading && user) {
-      console.log('User already logged in, redirecting...');
-      router.replace('/');
-    }
-  }, [user, authLoading, router]);
+  // Don't redirect here - let AuthProvider handle it to prevent conflicts
+  // useEffect(() => {
+  //   if (!authLoading && user) {
+  //     console.log('User already logged in, redirecting...');
+  //     router.replace('/');
+  //   }
+  // }, [user, authLoading, router]);
 
   // Show loading while checking auth state
   if (authLoading) {
