@@ -27,14 +27,6 @@ export default function AuthPage() {
 
   const router = useRouter();
 
-  // Redirect authenticated users immediately
-  useEffect(() => {
-    if (!authLoading && user) {
-      console.log('User authenticated, forcing redirect to home...');
-      window.location.href = '/';
-    }
-  }, [user, authLoading]);
-
   // Show loading while checking auth state
   if (authLoading) {
     return (
@@ -47,9 +39,17 @@ export default function AuthPage() {
     );
   }
 
-  // Don't render anything if user is authenticated (redirect will happen)
+  // If user is authenticated, redirect using Next.js router
   if (user) {
-    return null;
+    router.push('/');
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">מעביר...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
