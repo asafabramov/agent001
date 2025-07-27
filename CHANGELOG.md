@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.5] - 2025-01-27
 
+### Fixed (Hotfix)
+- **Build Deployment Issues**
+  - Fixed variable name conflicts in file-utils.ts (multiple 'data' declarations)
+  - Resolved Edge Runtime environment variable access issues
+  - Added fallback Supabase configuration for build-time compatibility
+  - Updated file utility functions to accept Supabase client as parameter
+  - Enhanced API routes with proper environment variable validation
+
+### Technical
+- Modified uploadFileToStorage, saveFileMetadata, and getConversationFiles functions
+- Added isSupabaseConfigured helper for runtime validation
+- Fixed middleware and API routes environment variable handling
+- Ensured static generation works with proper fallback configuration
+
+## [0.0.5] - 2025-01-27
+
 ### Added
 - **Complete User Authentication System**
   - Email/password login and signup with Hebrew RTL interface
