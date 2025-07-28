@@ -16,7 +16,10 @@
       "Bash(git stash show:*)",
       "Bash(git stash drop:*)",
       "Bash(mkdir:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run dev:*)",
+      "Bash(ls:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
   }

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createAuthenticatedClient } from '@/utils/supabase/server';
 import { 
   validateFile, 
   uploadFileToStorage, 
@@ -10,36 +9,6 @@ import {
 
 export const runtime = 'edge';
 
-// Helper to create authenticated Supabase client
-function createAuthenticatedClient() {
-  const cookieStore = cookies();
-  
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Missing Supabase environment variables');
-  }
-
-  return createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options });
-        },
-      },
-    }
-  );
-}
-
 export async function POST(request: NextRequest) {
   try {
     const supabase = createAuthenticatedClient();
@@ -47,12 +16,23 @@ export async function POST(request: NextRequest) {
     // Get the authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (authError || !user) {
+    if (authError) {
+      console.error('Auth error in upload:', authError);
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'שגיאת הזדהות: ' + authError.message },
         { status: 401 }
       );
     }
+    
+    if (!user) {
+      console.error('No user found in upload request');
+      return NextResponse.json(
+        { error: 'לא זוהה משתמש מחובר' },
+        { status: 401 }
+      );
+    }
+
+    console.log('Upload request - User authenticated:', user.email);
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -81,7 +61,24 @@ export async function POST(request: NextRequest) {
       .eq('id', conversationId)
       .single();
 
-    if (convError || !conversation || conversation.user_id !== user.id) {
+    if (convError) {
+      console.error('Conversation lookup error:', convError);
+      return NextResponse.json(
+        { error: 'שגיאה באימות השיחה: ' + convError.message },
+        { status: 403 }
+      );
+    }
+
+    if (!conversation) {
+      console.error('Conversation not found:', conversationId);
+      return NextResponse.json(
+        { error: 'השיחה לא נמצאה' },
+        { status: 403 }
+      );
+    }
+
+    if (conversation.user_id !== user.id) {
+      console.error('User does not own conversation:', { userId: user.id, conversationUserId: conversation.user_id });
       return NextResponse.json(
         { error: 'אין הרשאה לשיחה זו' },
         { status: 403 }
@@ -91,15 +88,20 @@ export async function POST(request: NextRequest) {
     // Generate user-specific storage path
     const storagePath = generateStoragePath(user.id, conversationId, file.name);
 
+    console.log('Starting file upload to storage:', storagePath);
+
     // Upload to Supabase Storage
     const uploadResult = await uploadFileToStorage(file, storagePath, supabase);
     
     if (!uploadResult.success) {
+      console.error('Storage upload failed:', uploadResult.error);
       return NextResponse.json(
         { error: uploadResult.error },
         { status: 500 }
       );
     }
+
+    console.log('File upload successful, saving metadata...');
 
     // Save metadata to database
     const saveResult = await saveFileMetadata(
@@ -110,11 +112,14 @@ export async function POST(request: NextRequest) {
     );
 
     if (!saveResult.success) {
+      console.error('Metadata save failed:', saveResult.error);
       return NextResponse.json(
         { error: saveResult.error },
         { status: 500 }
       );
     }
+
+    console.log('File upload complete:', saveResult.fileRecord?.id);
 
     return NextResponse.json({
       success: true,
