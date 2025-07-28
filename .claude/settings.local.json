@@ -14,7 +14,9 @@
       "Bash(git push:*)",
       "Bash(npx supabase:*)",
       "Bash(git stash show:*)",
-      "Bash(git stash drop:*)"
+      "Bash(git stash drop:*)",
+      "Bash(mkdir:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }
