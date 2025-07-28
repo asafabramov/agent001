@@ -12,7 +12,9 @@
       "Bash(git add:*)",
       "Bash(git tag:*)",
       "Bash(git push:*)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(git stash show:*)",
+      "Bash(git stash drop:*)"
     ],
     "deny": []
   }
